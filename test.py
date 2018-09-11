@@ -14,7 +14,7 @@ import torchvision.transforms as transforms
 import cv2
 
 SUBDATASET_DIR = os.path.join(constants.DATA_DIR, 'subdataset')
-TEST_IMAGE = '/home/t3min4l/workspace/texture-classification/data/subdataset/canvas1/canvas1-a-p001.png'
+TEST_IMAGE = '/home/main/workspace/texture-classification/data/subdataset/canvas1/canvas1-a-p001.png'
 
 
 folders = [x[0] for x in os.walk(SUBDATASET_DIR)]
@@ -88,10 +88,10 @@ class AlexNet(nn.Module):
         return x
 
 
-# image = Image.open(TEST_IMAGE)
-# tmp = image.getpixel((0,0))
-# if isinstance(tmp, int) or len(tmp) != 3:
-#     image = image.convert('RGB')
+image = Image.open(TEST_IMAGE)
+tmp = image.getpixel((0,0))
+if isinstance(tmp, int) or len(tmp) != 3:
+    image = image.convert('RGB')
 
 image = cv2.imread(TEST_IMAGE)
 image = cv2.resize(image, (256, 256), interpolation=cv2.INTER_CUBIC)
@@ -101,9 +101,15 @@ image_transformer = transforms.Compose([
     ])
 
 image = image_transformer(image)
-image = image.unsqueeze(0)
+image_input = image.unsqueeze(0)
 print(image.shape)
 model = AlexNet()
 model.to('cpu')
-output = model(image)
+print(image.shape)
+print(image_input.shape)
+image_input = image_input.permute(0,3,1,2)
+print(image_input.shape)
+output = model(image_input)
 print(output)
+print(list(model.features.children()))
+print('-')*20
