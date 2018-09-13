@@ -12,6 +12,7 @@ import torch.optim as optim
 from PIL import Image
 import torchvision.transforms as transforms
 import cv2
+import matplotlib.pyplot as plt
 
 SUBDATASET_DIR = os.path.join(constants.DATA_DIR, 'subdataset')
 TEST_IMAGE = '/home/main/workspace/texture-classification/data/subdataset/canvas1/canvas1-a-p001.png'
@@ -112,4 +113,23 @@ print(image_input.shape)
 output = model(image_input)
 print(output)
 print(list(model.features.children()))
-print('-')*20
+from skimage import io 
+from sklearn import preprocessing
+from skimage import feature
+image = cv2.imread(TEST_IMAGE)
+image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+graycomatrix1 = feature.greycomatrix(image, distances=[1], angles=[0], levels=256, symmetric=False, normed=False)
+graycomatrix = graycomatrix1[0:256, 0:256, 0, 0]
+# cv2.imshow('graycomatrix1', graycomatrix1)
+print(graycomatrix1)
+# fig = plt.figure(figsize=(4,4))
+
+# ax = fig.add_subplot(3,3,1)
+# ax.imshow(graycomatrix1,cmap=plt.cm.gray, interpolation='nearest', vmin=0, vmax=255)
+# ax.set_xlabel('Gray co-matrix')
+# plt.show()
+contrast = feature.greycoprops(graycomatrix1, prop='contrast')
+dissimilarity = feature.greycoprops(graycomatrix1, prop='dissimilarity')
+print('contrast:{}.dissimilarity:{}'.format(contrast, dissimilarity))
+print(contrast.shape)
+print(dissimilarity.shape)

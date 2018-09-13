@@ -14,8 +14,8 @@ class SDAE(nn.Module):
 		self.img_size = img_size
 		
 
-class MyAlexNet_SDAe(nn.Module):
-	def __init__(self, args):
+# class MyAlexNet_SDAe(nn.Module):
+# 	def __init__(self, args):
 
 class MyAlexNet(nn.Module):
 	def __init__(self, pretrained=False, num_classes = constants.NUM_LABELS):
