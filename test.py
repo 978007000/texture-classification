@@ -12,9 +12,15 @@ import torch.optim as optim
 from PIL import Image
 import torchvision.transforms as transforms
 import cv2
+import mahotas as mt
+import numpy as np
+import threading
+import logging
+import glcm
+
 
 SUBDATASET_DIR = os.path.join(constants.DATA_DIR, 'subdataset')
-TEST_IMAGE = '/home/main/workspace/texture-classification/data/subdataset/canvas1/canvas1-a-p001.png'
+TEST_IMAGE = '/home/t3min4l/workspace/texture-classification/data/subdataset/canvas1/canvas1-a-p001.png'
 
 
 folders = [x[0] for x in os.walk(SUBDATASET_DIR)]
@@ -46,6 +52,12 @@ def build_images_path_label(labels):
             dataset.append([fn, idx])
     return dataset
 
+def extract_features(image):
+    textures = mt.features.haralick(image)
+    print(textures)
+    ht_mean = textures.mean(axis=0)
+
+    return ht_mean
 
 dataset = build_images_path_label(labels)
 shuffle(dataset)
@@ -95,21 +107,33 @@ if isinstance(tmp, int) or len(tmp) != 3:
 
 image = cv2.imread(TEST_IMAGE)
 image = cv2.resize(image, (256, 256), interpolation=cv2.INTER_CUBIC)
+cv2.imshow('origin image',image)
+cv2.waitKey(5000)
+cv2.destroyAllWindows()
 image_transformer = transforms.Compose([
         # transforms.CenterCrop(256),
         transforms.ToTensor(),
     ])
 
-image = image_transformer(image)
-image_input = image.unsqueeze(0)
-print(image.shape)
-model = AlexNet()
-model.to('cpu')
-print(image.shape)
+image_input = image_transformer(image)
+image_input = image_input.unsqueeze(0)
 print(image_input.shape)
-image_input = image_input.permute(0,3,1,2)
-print(image_input.shape)
-output = model(image_input)
-print(output)
-print(list(model.features.children()))
-print('-')*20
+
+image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+# cv2.imshow('glcm',glcm)
+# cv2.waitKey(5000)
+# cv2.destroyWindow()
+
+
+# model = AlexNet()
+# model.to('cpu')
+# print(image.shape)
+# print(image_input.shape)
+# # image_input = image_input.permute(0,3,1,2)
+# print(image_input.shape)
+# output = model(image_input)
+# print(output)
+# print(list(model.features.children()))
+output = glcm.glcm(image, [1], [2], mode='raw')
+print(output.shape)
