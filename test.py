@@ -113,27 +113,6 @@ image_transformer = transforms.Compose([
 image_input = image_transformer(image)
 image_input = image_input.unsqueeze(0)
 print(image_input.shape)
-<<<<<<< HEAD
-
-image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
-# cv2.imshow('glcm',glcm)
-# cv2.waitKey(5000)
-# cv2.destroyWindow()
-
-
-# model = AlexNet()
-# model.to('cpu')
-# print(image.shape)
-# print(image_input.shape)
-# # image_input = image_input.permute(0,3,1,2)
-# print(image_input.shape)
-# output = model(image_input)
-# print(output)
-# print(list(model.features.children()))
-output = glcm.glcm(image, [1], [2], mode='raw')
-print(output.shape)
-=======
 image_input = image_input.permute(0,3,1,2)
 print(image_input.shape)
 output = model(image_input)
@@ -159,4 +138,3 @@ dissimilarity = feature.greycoprops(graycomatrix1, prop='dissimilarity')
 print('contrast:{}.dissimilarity:{}'.format(contrast, dissimilarity))
 print(contrast.shape)
 print(dissimilarity.shape)
->>>>>>> 6bc377c1d0ce16ab6c92a6625ebaafae67506320
