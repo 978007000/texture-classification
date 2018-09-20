@@ -13,6 +13,8 @@ from PIL import Image
 import torchvision.transforms as transforms
 import cv2
 import matplotlib.pyplot as plt
+import numpy as np
+
 
 SUBDATASET_DIR = os.path.join(constants.DATA_DIR, 'subdataset')
 TEST_IMAGE = '/home/t3min4l/workspace/texture-classification/data/subdataset/canvas1/canvas1-a-p001.png'
@@ -110,20 +112,20 @@ image_transformer = transforms.Compose([
         transforms.ToTensor(),
     ])
 
-image_input = image_transformer(image)
-image_input = image_input.unsqueeze(0)
-print(image_input.shape)
-image_input = image_input.permute(0,3,1,2)
-print(image_input.shape)
-output = model(image_input)
-print(output)
-print(list(model.features.children()))
+# image_input = image_transformer(image)
+# image_input = image_input.unsqueeze(0)
+# print(image_input.shape)
+# image_input = image_input.permute(0,3,1,2)
+# print(image_input.shape)
+# output = model(image_input)
+# print(output)
+# print(list(model.features.children()))
 from skimage import io 
 from sklearn import preprocessing
 from skimage import feature
 image = cv2.imread(TEST_IMAGE)
 image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-graycomatrix1 = feature.greycomatrix(image, distances=[1], angles=[0], levels=256, symmetric=False, normed=False)
+graycomatrix1 = feature.greycomatrix(image, distances=[1, 2], angles=[0, np.pi/2], levels=256, symmetric=True, normed=True)
 graycomatrix = graycomatrix1[0:256, 0:256, 0, 0]
 # cv2.imshow('graycomatrix1', graycomatrix1)
 print(graycomatrix1)
