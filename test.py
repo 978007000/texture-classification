@@ -17,7 +17,7 @@ import numpy as np
 from skimage.feature import greycomatrix, greycoprops
 
 SUBDATASET_DIR = os.path.join(constants.DATA_DIR, 'subdataset')
-TEST_IMAGE = '/home/t3min4l/workspace/texture-classification/data/subdataset/canvas1/canvas1-a-p001.png'
+TEST_IMAGE = '/home/t3min4l/workspace/texture-classification/data/subdataset/linsseeds1/linseeds1-a-p001.png'
 
 
 folders = [x[0] for x in os.walk(SUBDATASET_DIR)]
