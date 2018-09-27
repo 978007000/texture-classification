@@ -38,8 +38,28 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 start_epoch = 0
 best_acc = 0
 print('Model using device:{}'.format(device))
+input_size = 224
+mean = [0.485, 0.456, 0.406]
+std = [0.229, 0.224, 0.225]
 
-transforms
+transforms = {
+	'train' : transforms.Compose([
+			transforms.RandomSizedCrop(input_size),
+			transforms.RandomHorizontalFlip(),
+			transforms.ToTensor()
+			transforms.Normalize(mean, std)
+		])
+	'val' : transforms.Compose([
+			transforms.Scale(input_size),
+			transforms.CenterCrop(input_size),
+			transforms.ToTensor(),
+			transforms.Normalize(mean, std)
+		])
+}
+
+folders = [x[0] for x in os.walk(constants.DATASET_PATH)]
+labels = get_labels(folders)
+dataset = build_fns_labels(labels)
 
 
 
