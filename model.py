@@ -43,30 +43,30 @@ class CDAE(nn.Module):
 # class MyAlexNet_SDAe(nn.Module):
 # 	def __init__(self, args):
 
-class MyAlexNet(nn.Module):
-	def __init__(self, pretrained=False, num_classes = constants.NUM_LABELS):
-		super(MyAlexNet, self).__init__()
-		self.pretrained_model = models.AlexNet(pretrained=pretrained)
-		self.features = self.pretrained_model.features
-		self.classifier = nn.Sequential(
-            nn.Dropout(),
-            nn.Linear(256 * 7 * 7, 4096),
-            nn.ReLU(inplace=True),
-            nn.Dropout(),
-            nn.Linear(4096, 4096),
-            nn.ReLU(inplace=True),
-            nn.Linear(4096, num_classes),
-    	)
-    def forward(self, x):
-    	x = self.features(x)
-    	x = x.view(x.size(0), 256 * 7 * 7)
-    	return self.classifier(x)
+# class MyAlexNet(nn.Module):
+# 	def __init__(self, pretrained=False, num_classes = constants.NUM_LABELS):
+# 		super(MyAlexNet, self).__init__()
+# 		self.pretrained_model = models.AlexNet(pretrained=pretrained)
+# 		self.features = self.pretrained_model.features
+# 		self.classifier = nn.Sequential(
+#             nn.Dropout(),
+#             nn.Linear(256 * 7 * 7, 4096),
+#             nn.ReLU(inplace=True),
+#             nn.Dropout(),
+#             nn.Linear(4096, 4096),
+#             nn.ReLU(inplace=True),
+#             nn.Linear(4096, num_classes),
+#     	)
+#     def forward(self, x):
+#     	x = self.features(x)
+#     	x = x.view(x.size(0), 256 * 7 * 7)
+#     	return self.classifier(x)
     
-    def frozen_until(self, to_layer=1):
-    	print('Frozen pretrained model to the first sequential layer')
-    	for child in self.features.children():
-    		for param in child.parameters():
-    			param.require_grad = False
+#     def frozen_until(self, to_layer=1):
+#     	print('Frozen pretrained model to the first sequential layer')
+#     	for child in self.features.children():
+#     		for param in child.parameters():
+#     			param.require_grad = False
 
 class CustomResnet(nn.Module):
 	def __init__(self, depth, num_classes):
@@ -89,21 +89,18 @@ class CustomResnet(nn.Module):
 		return self.target(x)
 
 	def frozen_until(self, frozen_layer):
-		print('Frozen shared part of pretrained model to {}-th layer.'.format(frozen_layer))
-
+		print('Freeze updating weights of network layers to layer {}-th'.format(frozen_layer))
 		child_counter = 0
 		for child in self.shared.children():
 			if child_counter <= frozen_layer:
 				print("Child ", child_counter, " was frozen")
 				for param in child.parameters():
-					param.require_grad() = False
-				# frozen deeper children? check
-                # https://spandan-madan.github.io/A-Collection-of-important-tasks-in-pytorch/
-            else:
-            	print("Child ", child_counter, " was not frozen")
-            	for param in child.parameters():
-            		param.require_grad() =True
-            child_counter += 1
+					param.require_grad = False
+			else:
+				print("Child ", child_counter, " was not frozen")
+				for param in child.parameters():
+					param.require_grad = True
+			child_counter += 1
 
 def net_frozen(args, model):
 	print('----------------------------------------------------------')
@@ -112,6 +109,6 @@ def net_frozen(args, model):
 	if args.optim == 'adam':
 		optimizer = optim.Adam(filter(lambda p: p.require_grad, model.parameters()), lr=init_lr, weight_decay=args.weight_decay)
 	elif args.optim == 'sgd':
-		optimizer = optim.SGD(filter(lambda p: p.require_grad, model.parameters()). lr=init_lr, weight_decay=args.weight_decay, momentum=0.9)
+		optimizer = optim.SGD(filter(lambda p: p.require_grad, model.parameters()), lr=init_lr, weight_decay=args.weight_decay, momentum=0.9)
 	print('----------------------------------------------------------')
 	return model, optimizer

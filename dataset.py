@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import Dataset, DataLoader
-import torchvision.transform as transform 
+import torchvision.transforms as transforms
 import os
 import constants
 from PIL import Image
@@ -24,4 +24,5 @@ class MyDataset(Dataset):
     		image = image.convert('RGB')
     	if self.transform:
     		image = self.transform(image)
-    	return image, self.labels[idx], self.fns[idx]
+        return image, self.labels[idx]
+    	# return image, self.labels[idx], self.fns[idx]
