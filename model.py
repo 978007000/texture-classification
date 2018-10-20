@@ -8,12 +8,37 @@ import torch.optim as optim
 import constants
 
 
-class SDAE(nn.Module):
-	"""Stack Denoising Autoencoder"""
-	def __init__(self, img_size):
-		super(SDAE, self).__init__()
-		self.img_size = img_size
-		
+class CDAE(nn.Module):
+	"""convolution denoising autoencoder layer for stacked autoencoders"""
+	def __init__(self, input_size, output_size, stride):
+		super(CDAE, self).__init__()
+
+		self.forward_part = nn.Sequential(
+				nn.Conv2d(input_size, output_size, kernel_size=2, stride=stride, padding=0),
+				nn.ReLU(),
+			)
+		self.backward_part = nn.Sequential(
+				nn.ConvTranspose2d(output_size, input_size, kernel_size=2, stride=2, padding=0),
+				nn.ReLU()
+			)
+
+		nn.criterion = nn.MSELoss()
+		self.optimizer = optim.SGD(self.parameters(), lr=0.1)
+
+	def forward(self, x):
+		x = x.detach()
+
+		x_noisy = x*(Variable(x.data.new(x.size()).normal_(0, 0.1)) > -.1).type_as(x)
+		y = self.forward_part(x_noisy)
+
+		if self.training:
+			x_reconstruct = self.backward_part(y)
+			loss = self.criterion(x_reconstruct, Variable(x.data, require_grad=False))
+			self.optimizer.zero_grad()
+			loss.backward()
+			self.optimizer.step()
+
+		return y.detach()
 
 # class MyAlexNet_SDAe(nn.Module):
 # 	def __init__(self, args):

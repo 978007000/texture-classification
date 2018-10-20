@@ -3,6 +3,8 @@ import sys
 import constants
 import glob
 from sklearn.model_selection import train_test_split
+from sympy import *
+import numpy as np
 
 def get_labels(folders):
     substr1 = 'subdataset/'
@@ -36,3 +38,5 @@ def split_datasets(dataset):
     validateset = list(zip(X_validation, y_validation))
     testset = list(zip(X_test, y_test))
     return trainset, validateset, testset
+
+def spectral_local_histogram(img, window_size)
