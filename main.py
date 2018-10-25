@@ -16,7 +16,7 @@ import time
 
 import constants
 
-from model import CustomResnet
+from model import CustomResnet, net_frozen
 from utils import *
 from dataset import MyDataset
 
@@ -70,8 +70,11 @@ train_set = MyDataset(train_paths, transform=transforms['train'])
 val_set = MyDataset(val_paths, transform=transform['val'])
 test_set = MyDataset(test_set, transform=transform['val'])
 
-def save_convergence_model(save_loss, epoch_loss, epoch):
-	save_loss = epoch_loss
+train_loader = torch.utils.DataLoader(dataset=train_set, batch_size=args.batch_size, shuffle=True, batch_sampler=None)
+val_loader = torch.utils.DataLoader(dataset=val_set, batch_size=args.batch_size, shuffle=True, batch_sampler=None)
+test_loader = torch.utils.DataLoader(dataset=test_set, batch_size=args.batch_size, shuffle=True, batch_sampler=None)
+
+def save_convergence_model(save_loss, epoch):
 	print('Saving convergence model at epoch {}-th with loss {}'.format(epoch, save_loss))
 	state = {
 		'model' : model.state_dict(),
@@ -83,8 +86,7 @@ def save_convergence_model(save_loss, epoch_loss, epoch):
 		os.mkdir(constants.CHECKPOINT_DIR)
 	torch.save(state, os.path.join(constants.CHECKPOINT_DIR, 'convergence.t7'))
 
-def save_best_acc_model(save_acc, epoch_acc, epoch):
-	save_acc = epoch_acc
+def save_best_acc_model(save_acc, epoch):
 	print('Saving best acc model at epoch {}-th with acc {:.3}%'.format(epoch, save_acc))
 	state = {
 		'model' : model.state_dict(),
@@ -96,4 +98,99 @@ def save_best_acc_model(save_acc, epoch_acc, epoch):
 		os.mkdir(constants.CHECKPOINT_DIR)
 	torch.save(state, os.path.join(constants.CHECKPOINT_DIR, 'best_acc_model.t7'))
 
+save_loss = 0
+save_acc = 0
+
+
+model = CustomResnet(args.depth, num_classes)
+criterion = nn.CrossEntropyLoss()
+
+model, optimizer = net_frozen(args, model)
+
+model.to(device)
+
+
+
 def train_val(epoch):
+	print('======================================\n')
+	print('=>   Training at epoch {}-th'.format(epoch))
+
+	global save_loss
+	global save_acc
+
+	train_loss = 0 
+	train_correct = 0
+	total = 0
+
+	for batch_id, (images, labels) in enumerate(train_loader):
+		images, labels = images.to(device), labels.to(device)
+		optimizer.zero_grad()
+		outputs = net(images)
+		loss = criterion(outputs, labels)
+		loss.criterion(outputs, labels)
+		loss.backward()
+		optimizer.step()
+
+		train_loss += loss.item()
+		_, predicted = outputs.max(1)
+		total += labels.size(0)
+		train_correct += predicted.eq(labels).sum().item
+
+	epoch_train_correct = train_correct/total
+	epoch_train_loss = train_loss/(batch_id+1)
+	print('Loss: {:.3} || Error: {:.3} %'.format(epoch_loss, error*100))
+
+	if epoch == 0:
+		save_loss = epoch_loss
+		print('==> Saving convergence model ...')
+		save_convergence_model(save_loss, model)
+	elif save_loss > train_loss:
+		save_loss = epoch_loss
+		print('==> Saving ...')
+		save_convergence_model(save_loss, model)
+
+	print('========================================\n')
+	print('==> Validating ...')
+	val_loss = 0
+	val_correct = 0 
+	total = 0
+	model.eval()
+
+	for batch_id, (images, labels) in enumerate(val_loader):
+		images, labels = images.to(device), labels.to(device)
+		outputs = model(images)
+		loss = criterion(outputs, labels)
+
+		_, predicted = outputs.max(1)
+		val_loss += loss
+		total += labels.size(0)
+		val_correct += predicted.eq(labels).sum().item()
+
+	epoch_val_correct = val_correct/total
+	print('Acc: {.3} %'.format(epoch_train_correct*100))
+	if epoch_val_correct > save_acc:
+		save_acc = epoch_val_correct
+		print('==> Saving best-acc-on-val model ...')
+		save_best_acc_model(save_acc, model)
+
+def predict(conv=args.conv):
+	assert os.path.isdir(constants.CHECKPOINT_DIR), 'Error: Model is not availabel'
+	if conv:
+		checkpoint = torch.load(os.path.join(constants.CHECKPOINT_DIR, 'convergence.t7'))
+		model.load_state_dict(checkpoint['model'])
+	else:
+		checkpoint = torch.load(os.path.join(constants.CHECKPOINT_DIR, 'best_acc_model.t7'))
+		model.load_state_dict(checkpoint['model'])
+
+	torch.set_grad_enabled(False)
+	net.eval()
+	test_correct = 0
+	for batch_id, (images, labels) in enumerate(test_loader):
+		images, labels = images.to(device), labels.to(device)
+		outputs = models(images)
+
+		_, predicted = outputs.max(1)
+		test_correct += predicted.eq(labels).sum().item()
+
+	print('Accuracy on test data: {}%'.format((test_correct/total)*100))
+
